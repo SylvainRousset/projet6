@@ -2,24 +2,27 @@ const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
 const dotenv = require('dotenv');
-
-
+const auth = require('./middleware/auth'); 
+const userRoutes = require('./routes/user'); 
 dotenv.config();
 const Book = require('./models/book');
 
 const cors = require('cors');
 app.use(cors());
 app.use(cors({
-  origin: 'http://localhost:3000' // URL du frontend
+  origin: 'http://localhost:3000' 
 }));
+
 // Connexion à MongoDB Atlas
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch(error => console.log('Erreur de connexion à MongoDB :', error));
 
-// Middleware pour traiter les requêtes JSON
+// Middleware JSON
 app.use(express.json());
 
+// Routes d'authentification
+app.use('/api/auth', userRoutes);
 
 app.get('/api/books', (req, res, next) => {
   Book.find()

@@ -9,10 +9,10 @@ const bookSchema = mongoose.Schema({
   year: { type: Number, required: true },    // Année de publication
   genre: { type: String, required: true },   // Genre du livre
   ratings: [{
-    userId: { type: String, required: true }, // ID de l'utilisateur qui a donné la note
-    grade: { type: Number, required: true, min: 0, max: 5 }   // Note attribuée entre 0 et 5
+    userId: { type: String, required: true },
+    grade: { type: Number, required: true, min: 0, max: 5 }   
   }],
-  averageRating: { type: Number, required: true, default: 0 } // Note moyenne initialisée à 0
+  averageRating: { type: Number, required: true, default: 0 } // 
 });
 
 // Exportation du modèle
