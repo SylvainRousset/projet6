@@ -81,23 +81,6 @@ app.delete('/api/books/:id', auth, (req, res, next) => {
     .catch(error => res.status(500).json({ error }));  
 });
 
-// Route pour noter un livre
-app.post('/api/books/:id/rating', (req, res, next) => {
-  const { userId, rating } = req.body;
-  Book.findOne({ _id: req.params.id })
-    .then(book => {
-      if (book.ratings.some(r => r.userId === userId)) {
-        return res.status(400).json({ error });
-      }
-      book.ratings.push({ userId, grade: rating });
-      const total = book.ratings.reduce((acc, r) => acc + r.grade, 0);
-      book.averageRating = total / book.ratings.length;
-      book.save()
-        .then(() => res.status(200).json(book))
-        .catch(error => res.status(400).json({ error }));  
-    })
-    .catch(error => res.status(404).json({ error }));  
-});
 
 app.put('/api/books/:id', auth, upload, (req, res, next) => {
   let bookObject = {};
@@ -117,5 +100,25 @@ app.put('/api/books/:id', auth, upload, (req, res, next) => {
     .then(() => res.status(200).json({ message: 'Livre mis à jour avec succès !' }))
     .catch(error => res.status(400).json({ error }));  
 });
+
+
+// Route protégée pour noter un livre
+app.post('/api/books/:id/rating', auth, (req, res, next) => {
+  const { userId, rating } = req.body;
+  Book.findOne({ _id: req.params.id })
+    .then(book => {
+      if (book.ratings.some(r => r.userId === userId)) {
+        return res.status(400).json({ error: "Cet utilisateur a déjà noté ce livre." });
+      }
+      book.ratings.push({ userId, grade: rating });
+      const total = book.ratings.reduce((acc, r) => acc + r.grade, 0);
+      book.averageRating = total / book.ratings.length;
+      book.save()
+        .then(() => res.status(200).json(book))
+        .catch(error => res.status(400).json({ error }));  
+    })
+    .catch(error => res.status(404).json({ error }));
+});
+
 
 module.exports = app;
