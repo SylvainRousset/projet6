@@ -8,7 +8,7 @@ const upload = multer({ storage: storage }).single('imageUrl');
 const multerMiddleware = (req, res, next) => {
   upload(req, res, async function (err) {
     if (err) {
-      return res.status(400).json({ error: err.message });
+      return res.status(400).json((error));
     }
 
     const buffer = req.file.buffer; //  buffer en mémoire
@@ -22,7 +22,7 @@ const multerMiddleware = (req, res, next) => {
       // Upload  Cloudinary 
       const result = await cloudinary.uploader.upload_stream({ folder: 'books' }, (error, result) => {
         if (error) {
-          return res.status(500).json({ error: error.message });
+          return res.status(500).json((error));
         }
 
         req.file.path = result.secure_url;
@@ -30,7 +30,7 @@ const multerMiddleware = (req, res, next) => {
       }).end(resizedBuffer); // Transmettre Cloudinary
 
     } catch (error) {    
-      return res.status(500).json({ error: error.message });
+      return res.status(500).json((error));
     }
   });
 };

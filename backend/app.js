@@ -16,8 +16,7 @@ app.use(cors({ origin: 'http://localhost:3000' }));
 
 // Connexion à MongoDB Atlas
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('Connexion à MongoDB réussie !'))
-  .catch(error => console.log(error)); 
+  
 
 // Middleware JSON
 app.use(express.json());
@@ -28,13 +27,13 @@ app.use('/api/auth', userRoutes);
 app.get('/api/books', (req, res, next) => {
   Book.find()
     .then(books => res.status(200).json(books))
-    .catch(error => res.status(400).json({ error }));  
+    .catch(error => res.status(400).json(error));  
 });
  
 app.get('/api/books/:id', (req, res, next) => {
   Book.findOne({ _id: req.params.id })
     .then(book => res.status(200).json(book))
-    .catch(error => res.status(404).json({ error }));  
+    .catch(error => res.status(404).json(error));  
 });
 
 // Route protégée pour ajouter un livre
@@ -44,7 +43,7 @@ app.post('/api/books', auth, upload, (req, res) => {
     const { userId, title, author, year, genre } = bookData;
     
     if (!userId || !title || !author || !year || !genre) {
-      return res.status(400).json({ error });
+      return res.status(400).json(error);
     }
 
     const book = new Book({
@@ -60,10 +59,10 @@ app.post('/api/books', auth, upload, (req, res) => {
 
     book.save()
       .then(() => res.status(201).json(book))
-      .catch(error => res.status(400).json({ error }));  
+      .catch(error => res.status(400).json(error));  
 
   } catch (error) {
-    res.status(400).json({ error });  
+    res.status(400).json(error);  
   }
 });
 
@@ -75,10 +74,10 @@ app.delete('/api/books/:id', auth, (req, res, next) => {
       fs.unlink(`images/${filename}`, () => {
         Book.deleteOne({ _id: req.params.id })
           .then(() => res.status(200).json())
-          .catch(error => res.status(400).json({ error }));  
+          .catch(error => res.status(400).json(error));  
       });
     })
-    .catch(error => res.status(500).json({ error }));  
+    .catch(error => res.status(500).json(error));  
 });
 
 
@@ -98,7 +97,7 @@ app.put('/api/books/:id', auth, upload, (req, res, next) => {
 
   Book.updateOne({ _id: req.params.id }, { ...bookObject, _id: req.params.id })
     .then(() => res.status(200).json({ message: 'Livre mis à jour avec succès !' }))
-    .catch(error => res.status(400).json({ error }));  
+    .catch(error => res.status(400).json(error));  
 });
 
 
@@ -108,16 +107,16 @@ app.post('/api/books/:id/rating', auth, (req, res, next) => {
   Book.findOne({ _id: req.params.id })
     .then(book => {
       if (book.ratings.some(r => r.userId === userId)) {
-        return res.status(400).json({ error: "Cet utilisateur a déjà noté ce livre." });
+        return res.status(400).json({error: error.message});
       }
       book.ratings.push({ userId, grade: rating });
       const total = book.ratings.reduce((acc, r) => acc + r.grade, 0);
       book.averageRating = total / book.ratings.length;
       book.save()
         .then(() => res.status(200).json(book))
-        .catch(error => res.status(400).json({ error }));  
+        .catch(error => res.status(400).json(error));  
     })
-    .catch(error => res.status(404).json({ error }));
+    .catch(error => res.status(404).json(error));
 });
 
 
