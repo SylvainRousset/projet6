@@ -1,16 +1,3 @@
-
 /backend/node_modules
 /frontend/node_modules
-backend/package-lock.json
-backend/package-lock.json
-backend/package-lock.json
-backend/package.json
-backend/package-lock.json
-backend/package-lock.json
-backend/package-lock.json
-*.json
-backend/package-lock.json
-*.png
-*.jpg
-*.json
-*.jpeg
+.env
