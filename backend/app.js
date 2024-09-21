@@ -51,7 +51,7 @@ app.post('/api/books', auth, upload, (req, res) => {
       userId,
       title,
       author,
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`,
+      imageUrl: req.file.path, 
       year,
       genre,
       ratings: bookData.ratings || [],
@@ -106,7 +106,7 @@ app.put('/api/books/:id', auth, upload, (req, res, next) => {
     // Si une nouvelle image est fournie
     bookObject = {
       ...JSON.parse(req.body.book),
-      imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+      imageUrl: req.file.path, 
     };
   } else {
     // Si aucune nouvelle image n'est fournie, les autres données sont simplement mises à jour
