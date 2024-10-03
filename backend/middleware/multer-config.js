@@ -1,38 +1,37 @@
 const multer = require('multer');
-const cloudinary = require('./cloudinaryConfig');
 const sharp = require('sharp');
+const path = require('path');
+const fs = require('fs');
 
-const storage = multer.memoryStorage();  // mémoire tampon
-const upload = multer({ storage: storage }).single('imageUrl');
+// Configuration de Multer pour le stockage des fichiers
+const storage = multer.memoryStorage(); 
+const upload = multer({ storage: storage });
 
-const multerMiddleware = (req, res, next) => {
-  upload(req, res, async function (err) {
-    if (err) {
-      return res.status(400).json((error));
-    }
+const processImage = (req, res, next) => {
+  if (!req.file) {
+    return next(); 
+  }
 
-    const buffer = req.file.buffer; //  buffer en mémoire
+  const originalNameWithoutExt = path.parse(req.file.originalname).name; // Récupère seulement le nom sans extension
+  const imageName = `${Date.now()}-${originalNameWithoutExt.split(' ').join('-')}.webp`;
+  const outputPath = path.join(__dirname, '../images', imageName);
 
-    try {
-      const resizedBuffer = await sharp(buffer)
-        .resize(206, 260)
-        .toFormat('webp')
-        .toBuffer();  
-
-      // Upload  Cloudinary 
-      const result = await cloudinary.uploader.upload_stream({ folder: 'books' }, (error, result) => {
-        if (error) {
-          return res.status(500).json((error));
-        }
-
-        req.file.path = result.secure_url;
-        next(); 
-      }).end(resizedBuffer); // Transmettre Cloudinary
-
-    } catch (error) {    
-      return res.status(500).json((error));
-    }
-  });
+ 
+  sharp(req.file.buffer)  
+    .resize(206, 260) 
+    .toFormat('webp') 
+    .toFile(outputPath)  
+    .then(() => {
+      req.file.filename = imageName;
+      next(); 
+    })
+    .catch(err => {
+      console.error('Erreur lors du traitement de l\'image :', err);
+      return res.status(500).json(error);
+    });
 };
 
-module.exports = multerMiddleware;
+module.exports = {
+  upload,
+  processImage
+};

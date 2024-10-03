@@ -129,7 +129,7 @@ export async function addBook(data) {
   };
   const bodyFormData = new FormData();
   bodyFormData.append('book', JSON.stringify(book));
-  bodyFormData.append('imageUrl', data.file[0]);
+  bodyFormData.append('image', data.file[0]);
 
   try {
     return await axios({
@@ -161,7 +161,7 @@ export async function updateBook(data, id) {
   if (data.file[0]) {
     newData = new FormData();
     newData.append('book', JSON.stringify(book));
-    newData.append('imageUrl', data.file[0]);
+    newData.append('image', data.file[0]);
   } else {
     newData = { ...book };
   }
