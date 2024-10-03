@@ -15,7 +15,6 @@ const processImage = (req, res, next) => {
   const imagesDir = path.join(__dirname, '../images');
   if (!fs.existsSync(imagesDir)) {
     fs.mkdirSync(imagesDir, { recursive: true });
-    console.log('Dossier images créé');
   }
 
 
