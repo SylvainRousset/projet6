@@ -14,12 +14,12 @@ const processImage = (req, res, next) => {
 
   const imagesDir = path.join(__dirname, '../images');
   if (!fs.existsSync(imagesDir)) {
-    fs.mkdirSync(imagesDir, { recursive: true }); // Création récursive au cas où les dossiers parents manquent
+    fs.mkdirSync(imagesDir, { recursive: true });
     console.log('Dossier images créé');
   }
 
 
-  const originalNameWithoutExt = path.parse(req.file.originalname).name; // Récupère seulement le nom sans extension
+  const originalNameWithoutExt = path.parse(req.file.originalname).name; 
   const imageName = `${Date.now()}-${originalNameWithoutExt.split(' ').join('-')}.webp`;
   const outputPath = path.join(__dirname, '../images', imageName);
   
