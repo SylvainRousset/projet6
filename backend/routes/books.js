@@ -8,15 +8,15 @@ const { upload, processImage } = require('../middleware/multer-config');
 // Route GET pour récupérer les 3 livres ayant la meilleure note moyenne
 router.get('/bestrating', (req, res, next) => {
   Book.find()
-    .sort({ averageRating: -1 }) // Trier par averageRating décroissant
-    .limit(3) // Limiter à 3 livres
+    .sort({ averageRating: -1 }) 
+    .limit(3) 
     .then(books => {
       if (books.length === 0) {
         return res.status(404).json(new Error('Aucun livre trouvé'));
       }
       res.status(200).json(books);
     })
-    .catch(error => next(error)); // Propager les erreurs avec next()
+    .catch(error => next(error)); 
 });
 
 // Route GET pour récupérer tous les livres
@@ -51,25 +51,25 @@ router.post('/', auth, upload.single('image'), processImage, (req, res) => {
   // Initialiser `bookObject` à partir du body de la requête
   let bookObject = {};
   try {
-    bookObject = JSON.parse(req.body.book);  // Vous devez initialiser `bookObject` avant d'accéder à ses propriétés
+    bookObject = JSON.parse(req.body.book);  
   } catch (error) {
     return res.status(400).json(new Error('Données de livre invalides'));
   }
 
-  // Maintenant que `bookObject` est initialisé, vous pouvez extraire les valeurs
+  
   const { userId, title, author, year, genre, ratings } = bookObject;
 
-  // Vérifier que tous les champs obligatoires sont remplis
+  
   if (!userId || !title || !author || !year || !genre || !ratings || ratings.length === 0) {
     return res.status(400).json(new Error('Tous les champs sont requis : userId, title, author, year, genre, et ratings.'));
   }
 
-  // Vérifier que l'année est un chiffre valide
+  
   if (isNaN(year) || year <= 0) {
     return res.status(400).json(new Error('L\'année doit être un chiffre positif'));
   }
 
-  // Vérifier que la note est présente et valide
+ 
   const rating = ratings[0].grade;
   if (!rating || rating < 1 || rating > 5) {
     return res.status(400).json(new Error('Note invalide, doit être entre 1 et 5'));
@@ -87,7 +87,7 @@ router.post('/', auth, upload.single('image'), processImage, (req, res) => {
     imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
   });
 
-  // Enregistrer le livre dans la base de données
+  
   book.save()
     .then(() => res.status(201).json({ message: 'Livre enregistré avec succès' }))
     .catch(error => res.status(400).json(new Error(error.message)));
@@ -149,6 +149,11 @@ router.delete('/:id', auth, (req, res) => {
       if (!book) {
         return res.status(404).json(new Error('Livre non trouvé'));
       }
+
+      if (book.userId !== req.auth.userId) {
+        return res.status(403).json(new Error('Requête non autorisée'));
+      }
+
       const filename = book.imageUrl.split('/images/')[1];
       const filePath = `images/${filename}`;
 

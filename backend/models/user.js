@@ -18,7 +18,7 @@ const userSchema = mongoose.Schema({
   },
 });
 
-// Ajout du plugin pour gérer l'unicité des champs
+
 userSchema.plugin(uniqueValidator, { message: 'L\'{PATH} {VALUE} est déjà utilisé.' });
 
 module.exports = mongoose.model('User', userSchema);
