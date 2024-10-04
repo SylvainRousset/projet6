@@ -1,11 +1,15 @@
 # projet6
  
-# Mon vieux Grimoire
+# Mon vieux Grimoire BackEnd
 
 
-## Comment lancer le serveur ? 
+## 
+Créez un fichier .env avec les variables suivantes :
+MONGO_URI=<votre_uri_mongodb>
+JWT_SECRET=<votre_clé_secrète>
+PORT=4000
 
-### Avec npm
+### Run Avec npm
 
 Faites la commande `npm install` pour installer les dépendances puis `npm start dev` pour lancer le projet. 
 
