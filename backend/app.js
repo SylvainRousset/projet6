@@ -4,6 +4,8 @@ const app = express();
 const dotenv = require('dotenv');
 const path = require('path');
 const cors = require('cors');
+const userRoutes = require('./routes/user');
+const bookRoutes = require('./routes/books');
 
 dotenv.config();
 
@@ -17,11 +19,8 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('Connexion à MongoDB réussie !'))
   .catch((error) => console.error('Connexion à MongoDB échouée !', error));
 
-// Import des routes
-const userRoutes = require('./routes/user');
-const bookRoutes = require('./routes/books');
 
-// Utilisation des routes
+
 app.use('/api/auth', userRoutes);
 app.use('/api/books', bookRoutes);
 
