@@ -1,7 +1,7 @@
 // controllers/booksController.js
 const Book = require('../models/book');
 const fs = require('fs');
-
+const path = require('path');
 // Contrôleur pour récupérer les 3 livres ayant la meilleure note moyenne
 exports.getBestRatedBooks = (req, res, next) => {
   Book.find()
@@ -37,12 +37,9 @@ exports.getBookById = (req, res) => {
     .catch(error => res.status(500).json(new Error(error.message)));
 };
 
+
 // Contrôleur pour ajouter un nouveau livre
 exports.createBook = (req, res) => {
-  if (!req.file) {
-    return res.status(400).json(new Error('Image manquante'));
-  }
-
   let bookObject = {};
   try {
     bookObject = JSON.parse(req.body.book);
@@ -52,34 +49,55 @@ exports.createBook = (req, res) => {
 
   const { userId, title, author, year, genre, ratings } = bookObject;
 
+  // Validation des champs
   if (!userId || !title || !author || !year || !genre || !ratings || ratings.length === 0) {
     return res.status(400).json(new Error('Tous les champs sont requis.'));
   }
 
   if (isNaN(year) || year <= 0) {
-    return res.status(400).json(new Error('L\'année doit être un chiffre positif'));
+    return res.status(400).json(new Error('L\'année doit être un chiffre positif.'));
   }
 
   const rating = ratings[0].grade;
   if (!rating || rating < 1 || rating > 5) {
-    return res.status(400).json(new Error('Note invalide, doit être entre 1 et 5'));
+    return res.status(400).json(new Error('Note invalide, doit être entre 1 et 5.'));
   }
 
-  const book = new Book({
-    userId,
-    title,
-    author,
-    year,
-    genre,
-    ratings,
-    averageRating: rating,
-    imageUrl: `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-  });
+  // Validation des données terminée, on traite maintenant l'image
+  if (!req.file) {
+    return res.status(400).json(new Error('Image manquante.'));
+  }
 
-  book.save()
-    .then(() => res.status(201).json({ message: 'Livre enregistré avec succès' }))
-    .catch(error => res.status(400).json(new Error(error.message)));
+  // Enregistrer l'image redimensionnée après validation
+  const imageName = req.file.filename;
+  const outputPath = path.join(__dirname, '../images', imageName);
+
+  fs.writeFile(outputPath, req.file.processedBuffer, (err) => {
+    if (err) {
+      console.error('Erreur lors de la sauvegarde de l\'image :', err);
+      return res.status(500).json(new Error('Erreur lors de la sauvegarde de l\'image.'));
+    }
+
+    // Créer le livre une fois que l'image est enregistrée
+    const imageUrl = `${req.protocol}://${req.get('host')}/images/${imageName}`;
+
+    const book = new Book({
+      userId,
+      title,
+      author,
+      year,
+      genre,
+      ratings,
+      averageRating: rating,
+      imageUrl: imageUrl
+    });
+
+    book.save()
+      .then(() => res.status(201).json({ message: 'Livre enregistré avec succès' }))
+      .catch(error => res.status(400).json(new Error(error.message)));
+  });
 };
+
 
 // Contrôleur pour mettre à jour un livre
 exports.updateBook = (req, res) => {
@@ -97,7 +115,12 @@ exports.updateBook = (req, res) => {
   } else {
     bookObject = req.body;
   }
-
+    
+    const { title, author, year, genre } = bookObject;
+      
+    if (!title || !author || !year || !genre) {
+      return res.status(400).json(new Error('Tous les champs sont requis : title, author, year, genre.'));
+    }
   delete bookObject.userId;
   delete bookObject.ratings;
   delete bookObject.averageRating;
