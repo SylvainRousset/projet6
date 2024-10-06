@@ -99,57 +99,92 @@ exports.createBook = (req, res) => {
 };
 
 
+
+
 // Contrôleur pour mettre à jour un livre
 exports.updateBook = (req, res) => {
   const bookId = req.params.id;
   const hasNewImage = req.file != null;
   let bookObject = {};
 
-  if (hasNewImage) {
-    try {
-      bookObject = JSON.parse(req.body.book);
-    } catch (error) {
-      return res.status(400).json(new Error('Données du livre invalides'));
-    }
-    bookObject.imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
-  } else {
-    bookObject = req.body;
-  }
-    
+ 
+  const validateBookFields = (bookObject) => {
     const { title, author, year, genre } = bookObject;
-      
+
     if (!title || !author || !year || !genre) {
-      return res.status(400).json(new Error('Tous les champs sont requis : title, author, year, genre.'));
+      throw new Error('Tous les champs sont requis : title, author, year, genre.');
     }
-  delete bookObject.userId;
-  delete bookObject.ratings;
-  delete bookObject.averageRating;
 
-  Book.findOne({ _id: bookId })
-    .then((book) => {
-      if (!book) {
-        return res.status(404).json(new Error('Livre non trouvé'));
+    if (isNaN(year) || year <= 0) {
+      throw new Error('L\'année doit être un chiffre positif');
+    }
+  };
+
+ 
+  const deleteOldImage = (book) => {
+    const oldFilename = book.imageUrl.split('/images/')[1];
+    fs.unlink(`images/${oldFilename}`, (err) => {
+      if (err) {
+        console.error('Erreur lors de la suppression de l\'ancienne image :', err);
       }
+    });
+  };
 
-      if (book.userId !== req.auth.userId) {
-        return res.status(403).json(new Error('Requête non autorisée'));
+  try {
+    if (hasNewImage) {
+      try {
+        bookObject = JSON.parse(req.body.book);
+      } catch (error) {
+        return res.status(400).json(new Error('Données du livre invalides'));
       }
+      bookObject.imageUrl = `${req.protocol}://${req.get('host')}/images/${req.file.filename}`;
+    } else {
+      bookObject = req.body;
+    }
 
-      if (hasNewImage) {
-        const oldFilename = book.imageUrl.split('/images/')[1];
-        fs.unlink(`images/${oldFilename}`, (err) => {
-          if (err) {
-            console.error('Erreur lors de la suppression de l\'ancienne image :', err);
-          }
-        });
-      }
+  
+    validateBookFields(bookObject);
 
-      Book.updateOne({ _id: bookId }, { ...bookObject, _id: bookId })
-        .then(() => res.status(200).json({ message: 'Livre mis à jour avec succès' }))
-        .catch((error) => res.status(400).json(new Error(error.message)));
-    })
-    .catch((error) => res.status(500).json(new Error(error.message)));
+    delete bookObject.userId;
+    delete bookObject.ratings;
+    delete bookObject.averageRating;
+
+    // Recherche et mise à jour du livre
+    Book.findOne({ _id: bookId })
+      .then((book) => {
+        if (!book) {
+          return res.status(404).json(new Error('Livre non trouvé'));
+        }
+
+        if (book.userId !== req.auth.userId) {
+          return res.status(403).json(new Error('Requête non autorisée'));
+        }
+
+        if (hasNewImage) {
+          deleteOldImage(book);
+
+          
+          const imageName = req.file.filename;
+          const outputPath = path.join(__dirname, '../images', imageName);
+
+          fs.writeFile(outputPath, req.file.processedBuffer, (err) => {
+            if (err) {
+              console.error('Erreur lors de la sauvegarde de l\'image :', err);
+              return res.status(500).json(new Error('Erreur lors de la sauvegarde de l\'image.'));
+            }
+          });
+        }
+
+        Book.updateOne({ _id: bookId }, { ...bookObject, _id: bookId })
+          .then(() => res.status(200).json({ message: 'Livre mis à jour avec succès' }))
+          .catch((error) => res.status(400).json(new Error(error.message)));
+      })
+      .catch((error) => res.status(500).json(new Error(error.message)));
+  } catch (error) {
+    res.status(400).json(new Error(error.message));
+  }
 };
+
 
 // Contrôleur pour supprimer un livre
 exports.deleteBook = (req, res) => {
